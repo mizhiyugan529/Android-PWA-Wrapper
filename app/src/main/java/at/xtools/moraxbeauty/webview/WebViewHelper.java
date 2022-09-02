@@ -17,8 +17,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.JsResult;
+import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -27,6 +29,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import at.xtools.moraxbeauty.Constants;
 import at.xtools.moraxbeauty.R;
@@ -51,6 +57,7 @@ public class WebViewHelper {
     /**
      * Simple helper method checking if connected to Network.
      * Doesn't check for actual Internet connection!
+     *
      * @return {boolean} True if connected to Network.
      */
     private boolean isNetworkAvailable() {
@@ -90,7 +97,6 @@ public class WebViewHelper {
         webSettings.setJavaScriptEnabled(true);
         // must be set for our js-popup-blocker:
         webSettings.setSupportMultipleWindows(true);
-
         webSettings.setSupportZoom(false);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
@@ -143,19 +149,19 @@ public class WebViewHelper {
                 }
                 return false;
             }
+
             // For 3.0+ Devices (Start)
             // onActivityResult attached before constructor
-            protected void openFileChooser(ValueCallback uploadMsg, String acceptType)
-            {
-                mUploadMessage= uploadMsg;
+            protected void openFileChooser(ValueCallback uploadMsg, String acceptType) {
+                mUploadMessage = uploadMsg;
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("image/*");
                 activity.startActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
             }
+
             // For Lollipop 5.0+ Devices
-            public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams)
-            {
+            public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (uploadMessage != null) {
                     uploadMessage.onReceiveValue(null);
                     uploadMessage = null;
@@ -166,12 +172,16 @@ public class WebViewHelper {
                 Intent intent = null;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     intent = fileChooserParams.createIntent();
+                    List<String> validMimeTypes = extractValidMimeTypes(fileChooserParams.getAcceptTypes());
+                    if (validMimeTypes.isEmpty()) {
+                        intent.setType("image/*");
+                    } else {
+                        intent.setType(String.join(" ", validMimeTypes));
+                    }
                 }
-                try
-                {
+                try {
                     activity.startActivityForResult(intent, REQUEST_SELECT_FILE);
-                } catch (ActivityNotFoundException e)
-                {
+                } catch (ActivityNotFoundException e) {
                     uploadMessage = null;
                     Toast.makeText(activity.getApplicationContext(), "Cannot Open File Chooser", Toast.LENGTH_LONG).show();
                     return false;
@@ -179,19 +189,17 @@ public class WebViewHelper {
                 return true;
             }
 
-            //For Android 4.1 only
-            protected void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture)
-            {
-                mUploadMessage = uploadMsg;
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
-                activity.startActivityForResult(Intent.createChooser(intent, "File Browser"), FILECHOOSER_RESULTCODE);
+
+            public void showFileChooser(ValueCallback<String[]> filePathCallback,
+                                        String acceptType, boolean paramBoolean) {
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("image/*");
+                activity.startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
             }
 
-            protected void openFileChooser(ValueCallback<Uri> uploadMsg)
-            {
-                mUploadMessage = uploadMsg;
+            public void showFileChooser(ValueCallback<String[]> uploadFileCallback,
+                                        FileChooserParams fileChooserParams) {
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("image/*");
@@ -210,18 +218,14 @@ public class WebViewHelper {
                 new AlertDialog.Builder(webView.getContext())
                         .setMessage(message)
                         .setPositiveButton(android.R.string.ok,
-                                new DialogInterface.OnClickListener()
-                                {
-                                    public void onClick(DialogInterface dialog, int which)
-                                    {
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
                                         result.confirm();
                                     }
                                 })
                         .setNegativeButton(android.R.string.cancel,
-                                new DialogInterface.OnClickListener()
-                                {
-                                    public void onClick(DialogInterface dialog, int which)
-                                    {
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
                                         result.cancel();
                                     }
                                 })
@@ -276,10 +280,11 @@ public class WebViewHelper {
     // show "no app found" dialog
     private void showNoAppDialog(Activity thisActivity) {
         new AlertDialog.Builder(thisActivity)
-            .setTitle(R.string.noapp_heading)
-            .setMessage(R.string.noapp_description)
-            .show();
+                .setTitle(R.string.noapp_heading)
+                .setMessage(R.string.noapp_description)
+                .show();
     }
+
     // handle load errors
     private void handleLoadError(int errorCode) {
         if (errorCode != WebViewClient.ERROR_UNSUPPORTED_SCHEME) {
@@ -294,7 +299,30 @@ public class WebViewHelper {
             }, 100);
         }
     }
-
+    private List<String> extractValidMimeTypes(String[] mimeTypes) {
+        List<String> results = new ArrayList<String>();
+        List<String> mimes;
+        if (mimeTypes.length == 1 && mimeTypes[0].contains(",")) {
+            mimes = Arrays.asList(mimeTypes[0].split(","));
+        } else {
+            mimes = Arrays.asList(mimeTypes);
+        }
+        MimeTypeMap mtm = MimeTypeMap.getSingleton();
+        for (String mime : mimes) {
+            if (mime != null && mime.trim().startsWith(".")) {
+                String extensionWithoutDot = mime.trim().substring(1, mime.trim().length());
+                String derivedMime = mtm.getMimeTypeFromExtension(extensionWithoutDot);
+                if (derivedMime != null && !results.contains(derivedMime)) {
+                    // adds valid mime type derived from the file extension
+                    results.add(derivedMime);
+                }
+            } else if (mtm.getExtensionFromMimeType(mime) != null && !results.contains(mime)) {
+                // adds valid mime type checked agains file extensions mappings
+                results.add(mime);
+            }
+        }
+        return results;
+    }
     // handle external urls
     private boolean handleUrlLoad(WebView view, String url) {
         // prevent loading content that isn't ours
