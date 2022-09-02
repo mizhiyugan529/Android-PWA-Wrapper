@@ -1,4 +1,4 @@
-package at.xtools.pwawrapper.ui;
+package at.xtools.moraxbeauty.ui;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -14,8 +14,8 @@ import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
-import at.xtools.pwawrapper.Constants;
-import at.xtools.pwawrapper.R;
+import at.xtools.moraxbeauty.Constants;
+import at.xtools.moraxbeauty.R;
 
 public class UIManager {
     // Instance variables

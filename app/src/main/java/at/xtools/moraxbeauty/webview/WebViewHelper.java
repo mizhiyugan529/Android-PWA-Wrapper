@@ -1,9 +1,14 @@
-package at.xtools.pwawrapper.webview;
+package at.xtools.moraxbeauty.webview;
+
+import static at.xtools.moraxbeauty.MainActivity.FILECHOOSER_RESULTCODE;
+import static at.xtools.moraxbeauty.MainActivity.REQUEST_SELECT_FILE;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
@@ -13,16 +18,19 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.webkit.CookieManager;
+import android.webkit.JsResult;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
-import at.xtools.pwawrapper.Constants;
-import at.xtools.pwawrapper.R;
-import at.xtools.pwawrapper.ui.UIManager;
+import at.xtools.moraxbeauty.Constants;
+import at.xtools.moraxbeauty.R;
+import at.xtools.moraxbeauty.ui.UIManager;
 
 public class WebViewHelper {
     // Instance variables
@@ -30,6 +38,8 @@ public class WebViewHelper {
     private UIManager uiManager;
     private WebView webView;
     private WebSettings webSettings;
+    public ValueCallback<Uri[]> uploadMessage;
+    public ValueCallback<Uri> mUploadMessage;
 
     public WebViewHelper(Activity activity, UIManager uiManager) {
         this.activity = activity;
@@ -81,6 +91,10 @@ public class WebViewHelper {
         // must be set for our js-popup-blocker:
         webSettings.setSupportMultipleWindows(true);
 
+        webSettings.setSupportZoom(false);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+
         // PWA settings
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             webSettings.setDatabasePath(activity.getApplicationContext().getFilesDir().getAbsolutePath());
@@ -129,12 +143,92 @@ public class WebViewHelper {
                 }
                 return false;
             }
+            // For 3.0+ Devices (Start)
+            // onActivityResult attached before constructor
+            protected void openFileChooser(ValueCallback uploadMsg, String acceptType)
+            {
+                mUploadMessage= uploadMsg;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("image/*");
+                activity.startActivityForResult(Intent.createChooser(i, "File Browser"), FILECHOOSER_RESULTCODE);
+            }
+            // For Lollipop 5.0+ Devices
+            public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams)
+            {
+                if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(null);
+                    uploadMessage = null;
+                }
+
+                uploadMessage = filePathCallback;
+
+                Intent intent = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    intent = fileChooserParams.createIntent();
+                }
+                try
+                {
+                    activity.startActivityForResult(intent, REQUEST_SELECT_FILE);
+                } catch (ActivityNotFoundException e)
+                {
+                    uploadMessage = null;
+                    Toast.makeText(activity.getApplicationContext(), "Cannot Open File Chooser", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+                return true;
+            }
+
+            //For Android 4.1 only
+            protected void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture)
+            {
+                mUploadMessage = uploadMsg;
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+                activity.startActivityForResult(Intent.createChooser(intent, "File Browser"), FILECHOOSER_RESULTCODE);
+            }
+
+            protected void openFileChooser(ValueCallback<Uri> uploadMsg)
+            {
+                mUploadMessage = uploadMsg;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("image/*");
+                activity.startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
+            }
 
             // update ProgressBar
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 uiManager.setLoadingProgress(newProgress);
                 super.onProgressChanged(view, newProgress);
+            }
+
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {
+                new AlertDialog.Builder(webView.getContext())
+                        .setMessage(message)
+                        .setPositiveButton(android.R.string.ok,
+                                new DialogInterface.OnClickListener()
+                                {
+                                    public void onClick(DialogInterface dialog, int which)
+                                    {
+                                        result.confirm();
+                                    }
+                                })
+                        .setNegativeButton(android.R.string.cancel,
+                                new DialogInterface.OnClickListener()
+                                {
+                                    public void onClick(DialogInterface dialog, int which)
+                                    {
+                                        result.cancel();
+                                    }
+                                })
+                        .create()
+                        .show();
+
+                return true;
             }
         });
 
@@ -207,8 +301,8 @@ public class WebViewHelper {
         if (!url.startsWith(Constants.WEBAPP_URL)) {
             // stop loading
             // stopping only would cause the PWA to freeze, need to reload the app as a workaround
-            view.stopLoading();
-            view.reload();
+//            view.stopLoading();
+//            view.reload();
 
             // open external URL in Browser/3rd party apps instead
             try {
@@ -221,6 +315,8 @@ public class WebViewHelper {
             } catch (Exception e) {
                 showNoAppDialog(activity);
             }
+
+            view.loadUrl(Constants.WEBAPP_URL);
             // return value for shouldOverrideUrlLoading
             return true;
         } else {
