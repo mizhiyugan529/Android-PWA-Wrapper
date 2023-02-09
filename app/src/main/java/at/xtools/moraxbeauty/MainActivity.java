@@ -165,6 +165,10 @@ public class MainActivity extends AppCompatActivity {
                         public boolean onMenuItemClick(MenuItem menuItem) {
                             String DownloadImageURL = webViewHitTestResult.getExtra();
                             String fileName = URLUtil.guessFileName(DownloadImageURL, null, null);
+                            if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+                                return false;
+                            }
                             if(URLUtil.isValidUrl(DownloadImageURL)){
                                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(DownloadImageURL));
                                 request.allowScanningByMediaScanner();
