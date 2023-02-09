@@ -37,6 +37,7 @@
   <androidx.coordinatorlayout/>
   <androidx.core/>
   <androidx.core.uwb/>
+  <androidx.credentials/>
   <androidx.cursoradapter/>
   <androidx.customview/>
   <androidx.databinding/>
@@ -53,10 +54,13 @@
   <androidx.games/>
   <androidx.gaming/>
   <androidx.glance/>
+  <androidx.graphics/>
   <androidx.gridlayout/>
   <androidx.health/>
+  <androidx.health.connect/>
   <androidx.heifwriter/>
   <androidx.hilt/>
+  <androidx.input/>
   <androidx.interpolator/>
   <androidx.javascriptengine/>
   <androidx.leanback/>
@@ -78,6 +82,9 @@
   <androidx.percentlayout/>
   <androidx.preference/>
   <androidx.print/>
+  <androidx.privacysandbox.ads/>
+  <androidx.privacysandbox.sdkruntime/>
+  <androidx.privacysandbox.tools/>
   <androidx.profileinstaller/>
   <androidx.recommendation/>
   <androidx.recyclerview/>
@@ -102,6 +109,7 @@
   <androidx.textclassifier/>
   <androidx.tracing/>
   <androidx.transition/>
+  <androidx.tv/>
   <androidx.tvprovider/>
   <androidx.ui/>
   <androidx.vectordrawable/>
@@ -110,6 +118,7 @@
   <androidx.viewpager2/>
   <androidx.wear/>
   <androidx.wear.compose/>
+  <androidx.wear.protolayout/>
   <androidx.wear.tiles/>
   <androidx.wear.watchface/>
   <androidx.webkit/>
@@ -159,12 +168,14 @@
   <com.android.tools.lint/>
   <com.android.tools.metalava/>
   <com.android.tools.pixelprobe/>
+  <com.android.tools.smali/>
   <com.android.tools.utp/>
   <com.android.volley/>
   <com.crashlytics.sdk.android/>
   <com.google.ads.afsn/>
   <com.google.ads.interactivemedia.v3/>
   <com.google.ads.mediation/>
+  <com.google.ambient.crossdevice/>
   <com.google.android.ads/>
   <com.google.android.ads.consent/>
   <com.google.android.apps.common.testing.accessibility.framework/>
@@ -180,18 +191,23 @@
   <com.google.android.instantapps/>
   <com.google.android.instantapps.thirdpartycompat/>
   <com.google.android.libraries.car/>
+  <com.google.android.libraries.cloud.telco.subgraph/>
   <com.google.android.libraries.enterprise.amapi/>
   <com.google.android.libraries.healthdata/>
+  <com.google.android.libraries.identity.googleid/>
   <com.google.android.libraries.maps/>
   <com.google.android.libraries.mapsplatform.secrets-gradle-plugin/>
   <com.google.android.libraries.places/>
   <com.google.android.libraries.play.games/>
+  <com.google.android.livesharing/>
   <com.google.android.material/>
   <com.google.android.mediahome/>
   <com.google.android.odml/>
   <com.google.android.play/>
+  <com.google.android.recaptcha/>
   <com.google.android.support/>
   <com.google.android.things/>
+  <com.google.android.tv/>
   <com.google.android.ump/>
   <com.google.android.wearable/>
   <com.google.androidbrowserhelper/>
@@ -209,6 +225,7 @@
   <com.google.firebase.appdistribution/>
   <com.google.firebase.crashlytics/>
   <com.google.firebase.firebase-perf/>
+  <com.google.firebase.testlab/>
   <com.google.gms/>
   <com.google.gms.google-services/>
   <com.google.jacquard/>
@@ -217,6 +234,7 @@
   <com.google.net.cronet/>
   <com.google.oboe/>
   <com.google.prefab/>
+  <com.google.relay/>
   <com.google.test.platform/>
   <com.google.testing.platform/>
   <io.fabric.sdk.android/>

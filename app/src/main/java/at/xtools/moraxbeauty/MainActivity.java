@@ -1,16 +1,23 @@
 package at.xtools.moraxbeauty;
 
 import android.Manifest;
+import android.app.DownloadManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.MenuItem;
+import android.view.View;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -69,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
             // Load up the Web App
             webViewHelper.loadHome();
         }
+
+        registerForContextMenu(webViewHelper.getWebView());
     }
 
     @Override
@@ -143,4 +152,36 @@ public class MainActivity extends AppCompatActivity {
         else
             Toast.makeText(getApplicationContext(), "Failed to Upload Image", Toast.LENGTH_LONG).show();
     }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu contextMenu, View view, ContextMenu.ContextMenuInfo contextMenuInfo) {
+        super.onCreateContextMenu(contextMenu, view, contextMenuInfo);
+        final WebView.HitTestResult webViewHitTestResult = webViewHelper.getWebView().getHitTestResult();
+        if (webViewHitTestResult.getType() == WebView.HitTestResult.IMAGE_TYPE ||
+                webViewHitTestResult.getType() == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+            contextMenu.add(0, 1, 0, "保存图片到本地")
+                    .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem menuItem) {
+                            String DownloadImageURL = webViewHitTestResult.getExtra();
+                            String fileName = URLUtil.guessFileName(DownloadImageURL, null, null);
+                            if(URLUtil.isValidUrl(DownloadImageURL)){
+                                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(DownloadImageURL));
+                                request.allowScanningByMediaScanner();
+                                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,fileName);
+                                DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                                downloadManager.enqueue(request);
+
+                                Toast.makeText(MainActivity.this,"保存成功",Toast.LENGTH_LONG).show();
+                            }
+                            else {
+                                Toast.makeText(MainActivity.this,"保存失败",Toast.LENGTH_LONG).show();
+                            }
+                            return false;
+                        }
+                    });
+        }
+    }
+
 }

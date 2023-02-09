@@ -1,11 +1,13 @@
 package at.xtools.moraxbeauty.webview;
 
+import static android.content.Context.DOWNLOAD_SERVICE;
 import static at.xtools.moraxbeauty.MainActivity.FILECHOOSER_RESULTCODE;
 import static at.xtools.moraxbeauty.MainActivity.REQUEST_SELECT_FILE;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,9 +20,13 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuItem;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.JsResult;
 import android.webkit.MimeTypeMap;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -52,6 +58,10 @@ public class WebViewHelper {
         this.uiManager = uiManager;
         this.webView = (WebView) activity.findViewById(R.id.webView);
         this.webSettings = webView.getSettings();
+    }
+
+    public WebView getWebView(){
+        return this.webView;
     }
 
     /**
